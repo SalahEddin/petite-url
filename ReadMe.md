@@ -18,3 +18,10 @@ then run the server with
 ```
 flask run
 ```
+
+## Running Tests
+While inside pipenv shell, run `pytest` that will scan methods that starts with `test`. 
+
+## Design choices
+- Chose not to support port numbers for IPv6 since many browsers don't support themwithout a flag [(ref)](https://support.mozilla.org/en-US/questions/1111992).
+- Assumed the web service won't be deployed for scaling at the beginning, that's why the counter range method isn't connecting to a separate service managing each deployment range.
