@@ -150,12 +150,19 @@ def test_shortCode_pipeline(shortcode, expectedSuccess, expectedApiCode, expecte
             else (False, None)
         )
 
+    def update_metadata():
+        return
+
     request = {"shortcode": shortcode}
 
-    result = short_url_pipeline.get_unwrapped_url(get_stored_code, request)
+    result = short_url_pipeline.get_unwrapped_url(
+        update_metadata, get_stored_code, request
+    )
 
     assert (
         result.success == expectedSuccess
         and result.apiCode == expectedApiCode
         and result.url == expectedUrl
+        # TODO if there's time use Mock to confirm update_metadata
+        # is called only in successful cases
     )

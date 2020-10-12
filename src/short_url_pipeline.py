@@ -102,6 +102,13 @@ class short_url_pipeline:
         result.success = True
         return result
 
+    # Method to allow running a method in a pipeline
+    @curry
+    def run_if_successful(func, record):
+        if record is not None and record.success:
+            func()
+        return record
+
     @curry
     def get_shortened_url(
         get_counter,
@@ -124,15 +131,20 @@ class short_url_pipeline:
 
     @curry
     def get_unwrapped_url(
+        register_entry_hit,
         get_stored_shortCode,
         request_body,
     ):
         # TODO try/catch
         get_url = short_url_pipeline.search_unwrapped_url(get_stored_shortCode)
+        update_shortcode_metadata = short_url_pipeline.run_if_successful(
+            register_entry_hit
+        )
 
         return pipe(
             request_body,
             short_url_pipeline.read_request_into_record,
             short_url_pipeline.validate_unwrap_parameters,
             get_url,
+            update_shortcode_metadata,
         )
