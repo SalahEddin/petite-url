@@ -5,14 +5,14 @@ from src.url_utils import validate_url, shorten_url
 SHORT_URL_LENGTH = 6
 
 REQUEST_BODY_URL_KEY = "url"
-REQUEST_BODY_SHORTCODE_KEY = "shortCode"
+REQUEST_BODY_SHORTCODE_KEY = "shortcode"
 
 
 class short_url_pipeline_record:
     url = None
     desired_shortCode = None
     success = True
-    shortCode = None
+    shortcode = None
     apiCode = 200
     message = None
 
@@ -49,20 +49,20 @@ class short_url_pipeline:
         if isFound:
             result.success = False
             result.apiCode = 409
-            result.message = "shortCode is already in use."
+            result.message = "shortcode is already in use."
         else:
-            result.shortCode = (
+            result.shortcode = (
                 shorten_url(get_counter, result.url)
                 if result.desired_shortCode is None
                 else result.desired_shortCode
             )
-            if result.shortCode is not None:
-                store_shortCode(result.shortCode, result.url)
+            if result.shortcode is not None:
+                store_shortCode(result.shortcode, result.url)
                 increment_counter()
             else:
                 result.success = False
                 result.apiCode = 500
-                result.message = "Could not generate shortCode."
+                result.message = "Could not generate shortcode."
         return result
 
     def read_request_into_record(request_body):
@@ -78,11 +78,12 @@ class short_url_pipeline:
             else None
         )
         result.apiCode = 200
-        result.shortCode = None
+        result.shortcode = None
         result.message = None
         result.success = True
         return result
 
+    @curry
     def get_shortened_url(
         get_counter,
         increment_counter,

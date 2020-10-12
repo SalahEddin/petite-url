@@ -25,6 +25,7 @@ While inside pipenv shell, run `pytest` that will scan methods that starts with 
 ## Design choices
 - Chose not to support port numbers for IPv6 since many browsers don't support themwithout a flag [(ref)](https://support.mozilla.org/en-US/questions/1111992).
 - Assumed the web service won't be deployed for scaling at the beginning, that's why the counter range method isn't connecting to a separate service managing each deployment range.
+- There is a decision to be made about allowing users to create multiple shortCodes for the same url, since the API allows for custom shortCodes, we can assume the system aims to care for the user experience, thus we can favor the url duplicate entries over minimising the DB size
 
 ## Optimisation
 - Since we're only encoding urls, it possible to encode more effeciently by splitting the encoding to (protocol + ...url)
