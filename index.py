@@ -34,6 +34,7 @@ def store_shortCode_in_db(shortcode, url):
 def update_metadata(shortcode):
     global metadata_db
     if shortcode in metadata_db:
+        # Make sure it's in ISO8601
         metadata_db[shortcode].redirectCount += 1
         metadata_db[shortcode].lastRedirect = datetime.datetime.now()
     else:
