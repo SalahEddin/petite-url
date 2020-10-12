@@ -8,7 +8,7 @@ from src.data_storage_module import (
     store_shortCode_in_db,
     update_metadata_in_db,
 )
-
+from src.counter_module import get_counter_value, increment_counter_value
 app = Flask(__name__)
 
 ###########################
@@ -16,16 +16,6 @@ app = Flask(__name__)
 ###########################
 shortCodes_db = {}
 metadata_db = {}
-counter = 1
-
-
-def increment_counter():
-    global counter
-    counter += 1
-
-
-def get_counter():
-    return counter
 
 
 ###########################
@@ -37,7 +27,7 @@ update_metadata = update_metadata_in_db(metadata_db)
 get_unwrapped_url = get_unwrapped_url_in_db(shortCodes_db)
 store_in_shortcode_db = store_shortCode_in_db(shortCodes_db, metadata_db)
 shorten_url_db_loaded = shorten_url_module.get_shortened_url(
-    get_counter, increment_counter, get_unwrapped_url, store_in_shortcode_db
+    get_counter_value, increment_counter_value, get_unwrapped_url, store_in_shortcode_db
 )
 get_shortcode_redirect_url = shorten_url_module.get_unwrapped_url(
     update_metadata, get_unwrapped_url
