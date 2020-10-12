@@ -20,7 +20,7 @@ def test_record_building(url, shortcode):
     result = short_url_pipeline.read_request_into_record(request)
     assert (
         result.url == url
-        and result.desired_shortCode == shortcode
+        and result.requested_shortcode == shortcode
         and result.success == True
         and result.apiCode == 200
         and result.shortcode is None
@@ -40,8 +40,26 @@ def test_record_building(url, shortcode):
 def test_url_validation(url, shortcode, expectedSuccess, expectedApiCode):
     result = short_url_pipeline_record()
     result.url = url
-    result.desired_shortCode = shortcode
-    short_url_pipeline.validate_parameters(result)
+    result.requested_shortcode = shortcode
+    short_url_pipeline.validate_shorten_parameters(result)
+    assert result.success == expectedSuccess and result.apiCode == expectedApiCode
+
+
+@pytest.mark.parametrize(
+    "shortcode,expectedSuccess,expectedApiCode",
+    [
+        ("123456", True, 200),
+        (None, False, 412),
+        ("1234567", False, 412),
+        ("12345", False, 412),
+    ],
+)
+def test_shortcode_validation(shortcode, expectedSuccess, expectedApiCode):
+    result = short_url_pipeline_record()
+    result.success = True
+    result.apiCode = 200
+    result.requested_shortcode = shortcode
+    short_url_pipeline.validate_unwrap_parameters(result)
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 
 
@@ -69,7 +87,7 @@ def test_shortCode_retrieval(
 
     result = short_url_pipeline_record()
     result.url = "https://www.facebook.com/"
-    result.desired_shortCode = shortcode
+    result.requested_shortcode = shortcode
     short_url_pipeline.get_shortCode(
         get_counter, increment_counter, get_stored_code, set_shortCode, result
     )
@@ -111,6 +129,33 @@ def test_shortCode_pipeline(
     assert (
         result.success == expectedSuccess
         and result.apiCode == expectedApiCode
-        and result.desired_shortCode == shortcode
+        and result.requested_shortcode == shortcode
         and result.shortcode == expectedCode
+    )
+
+
+@pytest.mark.parametrize(
+    "shortcode,expectedSuccess,expectedApiCode,expectedUrl",
+    [
+        ("aws123", False, 404, None),
+        ("aws1241", False, 412, None),
+        ("aws124", True, 302, "https://www.facebook.com/"),
+    ],
+)
+def test_shortCode_pipeline(shortcode, expectedSuccess, expectedApiCode, expectedUrl):
+    def get_stored_code(shortcode):
+        return (
+            (True, "https://www.facebook.com/")
+            if shortcode == "aws124"
+            else (False, None)
+        )
+
+    request = {"shortcode": shortcode}
+
+    result = short_url_pipeline.get_unwrapped_url(get_stored_code, request)
+
+    assert (
+        result.success == expectedSuccess
+        and result.apiCode == expectedApiCode
+        and result.url == expectedUrl
     )

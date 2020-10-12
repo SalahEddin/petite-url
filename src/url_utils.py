@@ -1,5 +1,12 @@
 import re
 
+# TODO Read from environment
+SHORT_URL_LENGTH = 6
+
+
+def validate_shortcode(shortcode):
+    return shortcode is not None and len(shortcode) == SHORT_URL_LENGTH
+
 
 def validate_url(url):
     regex = re.compile(
@@ -17,7 +24,7 @@ def shorten_url(get_counter_value, unwrapped_url):
     # base 62 characters
     characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     base = len(characters)
-    counter = get_counter_value() # TODO catch possible failure
+    counter = get_counter_value()  # TODO catch possible failure
     encoded = []
     while counter > 0:
         val = counter % base

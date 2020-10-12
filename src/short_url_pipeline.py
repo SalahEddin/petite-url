@@ -1,8 +1,5 @@
 from toolz import pipe, curry
-from src.url_utils import validate_url, shorten_url
-
-# TODO move to environment
-SHORT_URL_LENGTH = 6
+from src.url_utils import validate_url, validate_shortcode, shorten_url
 
 REQUEST_BODY_URL_KEY = "url"
 REQUEST_BODY_SHORTCODE_KEY = "shortcode"
@@ -10,7 +7,7 @@ REQUEST_BODY_SHORTCODE_KEY = "shortcode"
 
 class short_url_pipeline_record:
     url = None
-    desired_shortCode = None
+    requested_shortcode = None
     success = True
     shortcode = None
     apiCode = 200
@@ -18,7 +15,7 @@ class short_url_pipeline_record:
 
 
 class short_url_pipeline:
-    def validate_parameters(result):
+    def validate_shorten_parameters(result):
         if result.url is None:
             result.success = False
             result.apiCode = 400
@@ -27,16 +24,38 @@ class short_url_pipeline:
             result.success = False
             result.apiCode = 400
             result.message = "URL is not in a valid format."
-        elif (
-            result.desired_shortCode is not None
-            and len(result.desired_shortCode) != SHORT_URL_LENGTH
+        elif result.requested_shortcode is not None and not validate_shortcode(
+            result.requested_shortcode
         ):
             result.success = False
             result.apiCode = 412
             result.message = "short code is not in a valid format."
         return result
 
-    # TODO split into generation if not there and the storage
+    def validate_unwrap_parameters(result):
+        if result.requested_shortcode is None or not validate_shortcode(
+            result.requested_shortcode
+        ):
+            # TODO set from another module
+            result.success = False
+            result.apiCode = 412
+            result.message = "shortcode not in a valid format."
+        return result
+
+    @curry
+    def search_unwrapped_url(get_stored_shortcode, result):
+        if result is None or not result.success:
+            return result
+        isFound, unwrapped_url = get_stored_shortcode(result.requested_shortcode)
+        if not isFound:
+            result.success = False
+            result.apiCode = 404
+            result.message = "shortcode not found."
+        else:
+            result.url = unwrapped_url
+            result.apiCode = 302
+        return result
+
     @curry
     def get_shortCode(
         get_counter, increment_counter, get_stored_shortCode, store_shortCode, result
@@ -44,8 +63,8 @@ class short_url_pipeline:
         if not result.success:
             return result
         isFound = False
-        if result.desired_shortCode is not None:
-            isFound, _ = get_stored_shortCode(result.desired_shortCode)
+        if result.requested_shortcode is not None:
+            isFound, _ = get_stored_shortCode(result.requested_shortcode)
         if isFound:
             result.success = False
             result.apiCode = 409
@@ -53,8 +72,8 @@ class short_url_pipeline:
         else:
             result.shortcode = (
                 shorten_url(get_counter, result.url)
-                if result.desired_shortCode is None
-                else result.desired_shortCode
+                if result.requested_shortcode is None
+                else result.requested_shortcode
             )
             if result.shortcode is not None:
                 store_shortCode(result.shortcode, result.url)
@@ -67,7 +86,7 @@ class short_url_pipeline:
 
     def read_request_into_record(request_body):
         result = short_url_pipeline_record()
-        result.desired_shortCode = (
+        result.requested_shortcode = (
             request_body[REQUEST_BODY_SHORTCODE_KEY]
             if REQUEST_BODY_SHORTCODE_KEY in request_body
             else None
@@ -99,6 +118,21 @@ class short_url_pipeline:
         return pipe(
             request_body,
             short_url_pipeline.read_request_into_record,
-            short_url_pipeline.validate_parameters,
+            short_url_pipeline.validate_shorten_parameters,
             get_shortCode,
+        )
+
+    @curry
+    def get_unwrapped_url(
+        get_stored_shortCode,
+        request_body,
+    ):
+        # TODO try/catch
+        get_url = short_url_pipeline.search_unwrapped_url(get_stored_shortCode)
+
+        return pipe(
+            request_body,
+            short_url_pipeline.read_request_into_record,
+            short_url_pipeline.validate_unwrap_parameters,
+            get_url,
         )
