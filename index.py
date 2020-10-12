@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify, redirect
 import datetime
-from src.short_url_pipeline import short_url_pipeline, short_url_pipeline_record
+from src.shorten_url_module import shorten_url_module, short_url_pipeline_record
 from src.utils import get_now_in_iso8601
 
 app = Flask(__name__)
 
+###########################
+#### Globals
+###########################
 shortCodes_db = {}
 metadata_db = {}
 counter = 1
+
 
 def increment_counter():
     global counter
@@ -57,11 +61,11 @@ def read_metadata(shortcode):
         return None
 
 
-shorten_url_db_loaded = short_url_pipeline.get_shortened_url(
+shorten_url_db_loaded = shorten_url_module.get_shortened_url(
     get_counter, increment_counter, get_unwrapped_url_in_db, store_shortCode_in_db
 )
 
-get_shortcode_redirect_url = short_url_pipeline.get_unwrapped_url(
+get_shortcode_redirect_url = shorten_url_module.get_unwrapped_url(
     update_metadata, get_unwrapped_url_in_db
 )
 

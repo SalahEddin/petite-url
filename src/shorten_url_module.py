@@ -14,7 +14,7 @@ class short_url_pipeline_record:
     message = None
 
 
-class short_url_pipeline:
+class shorten_url_module:
 
     ###########################
     ### Pure functions
@@ -127,14 +127,14 @@ class short_url_pipeline:
         request_body,
     ):
         # TODO try/catch
-        get_shortCode = short_url_pipeline.get_shortCode(
+        get_shortCode = shorten_url_module.get_shortCode(
             get_counter, increment_counter, get_stored_shortCode, store_shortCode
         )
 
         return pipe(
             request_body,
-            short_url_pipeline.read_request_into_record,
-            short_url_pipeline.validate_shorten_parameters,
+            shorten_url_module.read_request_into_record,
+            shorten_url_module.validate_shorten_parameters,
             get_shortCode,
         )
 
@@ -145,15 +145,15 @@ class short_url_pipeline:
         request_body,
     ):
         # TODO try/catch
-        get_url = short_url_pipeline.search_unwrapped_url(get_stored_shortCode)
-        update_shortcode_metadata = short_url_pipeline.run_if_successful(
+        get_url = shorten_url_module.search_unwrapped_url(get_stored_shortCode)
+        update_shortcode_metadata = shorten_url_module.run_if_successful(
             register_entry_hit
         )
 
         return pipe(
             request_body,
-            short_url_pipeline.read_request_into_record,
-            short_url_pipeline.validate_unwrap_parameters,
+            shorten_url_module.read_request_into_record,
+            shorten_url_module.validate_unwrap_parameters,
             get_url,
             update_shortcode_metadata,
         )

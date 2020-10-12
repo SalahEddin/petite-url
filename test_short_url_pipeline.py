@@ -1,6 +1,6 @@
 import pytest
-from src.short_url_pipeline import (
-    short_url_pipeline,
+from src.shorten_url_module import (
+    shorten_url_module,
     short_url_pipeline_record,
 )
 
@@ -17,7 +17,7 @@ from src.short_url_pipeline import (
 )
 def test_record_building(url, shortcode):
     request = {"url": url, "shortcode": shortcode}
-    result = short_url_pipeline.read_request_into_record(request)
+    result = shorten_url_module.read_request_into_record(request)
     assert (
         result.url == url
         and result.requested_shortcode == shortcode
@@ -41,7 +41,7 @@ def test_url_validation(url, shortcode, expectedSuccess, expectedApiCode):
     result = short_url_pipeline_record()
     result.url = url
     result.requested_shortcode = shortcode
-    short_url_pipeline.validate_shorten_parameters(result)
+    shorten_url_module.validate_shorten_parameters(result)
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 
 
@@ -59,7 +59,7 @@ def test_shortcode_validation(shortcode, expectedSuccess, expectedApiCode):
     result.success = True
     result.apiCode = 200
     result.requested_shortcode = shortcode
-    short_url_pipeline.validate_unwrap_parameters(result)
+    shorten_url_module.validate_unwrap_parameters(result)
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 
 
@@ -88,7 +88,7 @@ def test_shortCode_retrieval(
     result = short_url_pipeline_record()
     result.url = "https://www.facebook.com/"
     result.requested_shortcode = shortcode
-    short_url_pipeline.get_shortCode(
+    shorten_url_module.get_shortCode(
         get_counter, increment_counter, get_stored_code, set_shortCode, result
     )
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
@@ -122,7 +122,7 @@ def test_shortCode_pipeline(
 
     request = {"url": url, "shortcode": shortcode}
 
-    result = short_url_pipeline.get_shortened_url(
+    result = shorten_url_module.get_shortened_url(
         get_counter, increment_counter, get_stored_code, set_shortCode, request
     )
 
@@ -150,12 +150,12 @@ def test_shortCode_pipeline(shortcode, expectedSuccess, expectedApiCode, expecte
             else (False, None)
         )
 
-    def update_metadata():
+    def update_metadata(shortcode):
         return
 
     request = {"shortcode": shortcode}
 
-    result = short_url_pipeline.get_unwrapped_url(
+    result = shorten_url_module.get_unwrapped_url(
         update_metadata, get_stored_code, request
     )
 
