@@ -5,6 +5,7 @@
 1. Make sure you have `pipenv`, you can install it with `pip install pipenv`
 2. Install dependencies from the pipfile with `pipenv install`
 3. Enter the virtual shell with `pipenv shell`
+4. Rename `.env.local` to `.env`
 
 ## Running Server
 

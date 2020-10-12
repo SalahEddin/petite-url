@@ -19,8 +19,8 @@ class shorten_url_module:
     ###########################
     ### Pure functions
     ###########################
-
-    def validate_shorten_parameters(result):
+    @curry
+    def validate_shorten_parameters(shortcode_validate_func, result):
         if result.url is None:
             result.success = False
             result.apiCode = 400
@@ -29,7 +29,7 @@ class shorten_url_module:
             result.success = False
             result.apiCode = 400
             result.message = "URL is not in a valid format."
-        elif result.requested_shortcode is not None and not validate_shortcode(
+        elif result.requested_shortcode is not None and not shortcode_validate_func(
             result.requested_shortcode
         ):
             result.success = False
@@ -37,8 +37,9 @@ class shorten_url_module:
             result.message = "short code is not in a valid format."
         return result
 
-    def validate_unwrap_parameters(result):
-        if result.requested_shortcode is None or not validate_shortcode(
+    @curry
+    def validate_unwrap_parameters(shortcode_validate_func, result):
+        if result.requested_shortcode is None or not shortcode_validate_func(
             result.requested_shortcode
         ):
             # TODO set from another module
@@ -120,6 +121,7 @@ class shorten_url_module:
 
     @curry
     def get_shortened_url(
+        shortcode_length_limit,
         get_counter,
         increment_counter,
         get_stored_shortCode,
@@ -127,6 +129,10 @@ class shorten_url_module:
         request_body,
     ):
         # TODO try/catch
+        validate_shortcode_with_limit = validate_shortcode(shortcode_length_limit)
+        validate_parameters = shorten_url_module.validate_shorten_parameters(
+            validate_shortcode_with_limit
+        )
         get_shortCode = shorten_url_module.get_shortCode(
             get_counter, increment_counter, get_stored_shortCode, store_shortCode
         )
@@ -134,17 +140,20 @@ class shorten_url_module:
         return pipe(
             request_body,
             shorten_url_module.read_request_into_record,
-            shorten_url_module.validate_shorten_parameters,
+            validate_parameters,
             get_shortCode,
         )
 
     @curry
     def get_unwrapped_url(
+        shortcode_length_limit,
         register_entry_hit,
         get_stored_shortCode,
         request_body,
     ):
         # TODO try/catch
+        validate_shortcode_with_limit = validate_shortcode(shortcode_length_limit)
+        validate_parameters = shorten_url_module.validate_unwrap_parameters(validate_shortcode_with_limit)
         get_url = shorten_url_module.search_unwrapped_url(get_stored_shortCode)
         update_shortcode_metadata = shorten_url_module.run_if_successful(
             register_entry_hit
@@ -153,7 +162,7 @@ class shorten_url_module:
         return pipe(
             request_body,
             shorten_url_module.read_request_into_record,
-            shorten_url_module.validate_unwrap_parameters,
+            validate_parameters,
             get_url,
             update_shortcode_metadata,
         )

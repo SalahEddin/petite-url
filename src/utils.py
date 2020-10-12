@@ -1,12 +1,10 @@
 import re
 import datetime
+from toolz import curry
 
-# TODO Read from environment
-SHORT_URL_LENGTH = 6
-
-
-def validate_shortcode(shortcode):
-    return shortcode is not None and len(shortcode) == SHORT_URL_LENGTH
+@curry
+def validate_shortcode(shortcode_length_limit, shortcode):
+    return shortcode is not None and len(shortcode) == shortcode_length_limit
 
 
 def validate_url(url):

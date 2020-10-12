@@ -1,5 +1,7 @@
 from flask import Flask, request, redirect
 from toolz import pipe, partial, curry
+from dotenv import load_dotenv
+import os
 from src.shorten_url_module import shorten_url_module, short_url_pipeline_record
 from src.utils import get_now_in_iso8601
 from src.data_storage_module import (
@@ -8,16 +10,23 @@ from src.data_storage_module import (
     store_shortCode_in_db,
     update_metadata_in_db,
 )
-from src.counter_module import get_counter_value, increment_counter_value
-app = Flask(__name__)
+from src.counter_module import (
+    get_counter_value,
+    increment_counter_value,
+    set_counter_value,
+)
 
 ###########################
-#### Globals
+#### Environment Variables and globals
 ###########################
+
 shortCodes_db = {}
 metadata_db = {}
 
-
+load_dotenv()
+set_counter_value(int(os.getenv("COUNTER_STARTING_VALUE")))
+SHORTCODE_LENGTH_LIMIT = int(os.getenv("SHORTCODE_LENGTH_LIMIT"))
+print(SHORTCODE_LENGTH_LIMIT)
 ###########################
 #### Partial Functions
 ###########################
@@ -27,29 +36,21 @@ update_metadata = update_metadata_in_db(metadata_db)
 get_unwrapped_url = get_unwrapped_url_in_db(shortCodes_db)
 store_in_shortcode_db = store_shortCode_in_db(shortCodes_db, metadata_db)
 shorten_url_db_loaded = shorten_url_module.get_shortened_url(
-    get_counter_value, increment_counter_value, get_unwrapped_url, store_in_shortcode_db
+    SHORTCODE_LENGTH_LIMIT,
+    get_counter_value,
+    increment_counter_value,
+    get_unwrapped_url,
+    store_in_shortcode_db,
 )
 get_shortcode_redirect_url = shorten_url_module.get_unwrapped_url(
-    update_metadata, get_unwrapped_url
+    SHORTCODE_LENGTH_LIMIT, update_metadata, get_unwrapped_url
 )
 
 ###########################
 #### Routes
 ###########################
 
-
-@app.route("/")
-def hello_world():
-    return "Hello, World!"
-
-
-@app.route("/test")
-def test():
-    global shortCodes_db
-    print(shortCodes_db)
-    store_in_shortcode_db("123456", "http://ww.ww.ww")
-    print(shortCodes_db)
-    return "1 "
+app = Flask(__name__)
 
 
 @app.route("/shorten", methods=["POST"])

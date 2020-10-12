@@ -3,6 +3,7 @@ from src.shorten_url_module import (
     shorten_url_module,
     short_url_pipeline_record,
 )
+from src.utils import validate_shortcode
 
 
 @pytest.mark.parametrize(
@@ -41,7 +42,10 @@ def test_url_validation(url, shortcode, expectedSuccess, expectedApiCode):
     result = short_url_pipeline_record()
     result.url = url
     result.requested_shortcode = shortcode
-    shorten_url_module.validate_shorten_parameters(result)
+    validate_shortcode_with_limit = validate_shortcode(6)
+    shorten_url_module.validate_shorten_parameters(
+        validate_shortcode_with_limit, result
+    )
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 
 
@@ -59,7 +63,9 @@ def test_shortcode_validation(shortcode, expectedSuccess, expectedApiCode):
     result.success = True
     result.apiCode = 200
     result.requested_shortcode = shortcode
-    shorten_url_module.validate_unwrap_parameters(result)
+    validate_shortcode_with_limit = validate_shortcode(6)
+
+    shorten_url_module.validate_unwrap_parameters(validate_shortcode_with_limit, result)
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 
 
@@ -123,7 +129,7 @@ def test_shortCode_pipeline(
     request = {"url": url, "shortcode": shortcode}
 
     result = shorten_url_module.get_shortened_url(
-        get_counter, increment_counter, get_stored_code, set_shortCode, request
+        6, get_counter, increment_counter, get_stored_code, set_shortCode, request
     )
 
     assert (
@@ -156,7 +162,7 @@ def test_shortCode_pipeline(shortcode, expectedSuccess, expectedApiCode, expecte
     request = {"shortcode": shortcode}
 
     result = shorten_url_module.get_unwrapped_url(
-        update_metadata, get_stored_code, request
+        6, update_metadata, get_stored_code, request
     )
 
     assert (

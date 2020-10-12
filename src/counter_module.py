@@ -15,4 +15,9 @@ def increment_counter_value():
 
 
 def get_counter_value():
+    global counter
     return counter
+
+def set_counter_value(value):
+    global counter
+    counter = value
