@@ -1,7 +1,13 @@
-from flask import Flask, request, jsonify, redirect
-import datetime
+from flask import Flask, request, redirect
+from toolz import pipe, partial, curry
 from src.shorten_url_module import shorten_url_module, short_url_pipeline_record
 from src.utils import get_now_in_iso8601
+from src.data_storage_module import (
+    get_unwrapped_url_in_db,
+    read_metadata_in_db,
+    store_shortCode_in_db,
+    update_metadata_in_db,
+)
 
 app = Flask(__name__)
 
@@ -19,60 +25,41 @@ def increment_counter():
 
 
 def get_counter():
-    global counter
     return counter
 
 
-def get_unwrapped_url_in_db(shortcode):
-    if shortcode in shortCodes_db:
-        return True, shortCodes_db[shortcode]
-    else:
-        return False, None
+###########################
+#### Partial Functions
+###########################
 
-
-def store_shortCode_in_db(shortcode, url):
-    global shortCodes_db
-    shortCodes_db[shortcode] = url
-    metadata_db[shortcode] = {
-        "redirectCount": 0,
-        "lastRedirect": None,
-        "created": get_now_in_iso8601(),
-    }
-
-
-def update_metadata(shortcode):
-    global metadata_db
-    if shortcode in metadata_db:
-        metadata_db[shortcode]["redirectCount"] += 1
-        metadata_db[shortcode]["lastRedirect"] = get_now_in_iso8601()
-    else:
-        print("need to insert this key first")
-
-
-def read_metadata(shortcode):
-    if shortcode in metadata_db:
-        item = metadata_db[shortcode]
-        return {
-            "redirectCount": item["redirectCount"],
-            "lastRedirect": item["lastRedirect"],
-            "created": item["created"],
-        }
-    else:
-        return None
-
-
+read_metadata = read_metadata_in_db(metadata_db)
+update_metadata = update_metadata_in_db(metadata_db)
+get_unwrapped_url = get_unwrapped_url_in_db(shortCodes_db)
+store_in_shortcode_db = store_shortCode_in_db(shortCodes_db, metadata_db)
 shorten_url_db_loaded = shorten_url_module.get_shortened_url(
-    get_counter, increment_counter, get_unwrapped_url_in_db, store_shortCode_in_db
+    get_counter, increment_counter, get_unwrapped_url, store_in_shortcode_db
+)
+get_shortcode_redirect_url = shorten_url_module.get_unwrapped_url(
+    update_metadata, get_unwrapped_url
 )
 
-get_shortcode_redirect_url = shorten_url_module.get_unwrapped_url(
-    update_metadata, get_unwrapped_url_in_db
-)
+###########################
+#### Routes
+###########################
 
 
 @app.route("/")
 def hello_world():
     return "Hello, World!"
+
+
+@app.route("/test")
+def test():
+    global shortCodes_db
+    print(shortCodes_db)
+    store_in_shortcode_db("123456", "http://ww.ww.ww")
+    print(shortCodes_db)
+    return "1 "
 
 
 @app.route("/shorten", methods=["POST"])
