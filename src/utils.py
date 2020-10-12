@@ -32,3 +32,11 @@ def shorten_url(get_counter_value, unwrapped_url):
         counter = counter // base  # double slash returns the integer in python3
     # since `encoded` has reversed order of base62 id, reverse ret before return it
     return "".join(encoded[::-1])
+
+
+def get_now_in_iso8601():
+    # - Notice there is a bug when using astimezone() on utc time.
+    #   datetime.datetime.utcnow().astimezone().isoformat() gives an incorrect result
+    # - datetime.datetime.now().isoformat("T") doesn't add the Z in the specs
+    # - not sure if microseconds were required to be in a precision of 3, or 6 is ok 🤷‍♂️
+    return datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")

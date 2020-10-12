@@ -1,5 +1,5 @@
 import pytest
-from src.url_utils import validate_url, shorten_url
+from src.utils import validate_url, shorten_url
 
 
 @pytest.mark.parametrize(

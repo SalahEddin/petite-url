@@ -1,5 +1,5 @@
 from toolz import pipe, curry
-from src.url_utils import validate_url, validate_shortcode, shorten_url
+from src.utils import validate_url, validate_shortcode, shorten_url
 
 REQUEST_BODY_URL_KEY = "url"
 REQUEST_BODY_SHORTCODE_KEY = "shortcode"
@@ -15,6 +15,11 @@ class short_url_pipeline_record:
 
 
 class short_url_pipeline:
+
+    ###########################
+    ### Pure functions
+    ###########################
+
     def validate_shorten_parameters(result):
         if result.url is None:
             result.success = False
@@ -106,8 +111,12 @@ class short_url_pipeline:
     @curry
     def run_if_successful(func, record):
         if record is not None and record.success:
-            func(record.shortcode)
+            func(record.requested_shortcode)
         return record
+
+    ###########################
+    ### Pipelines
+    ###########################
 
     @curry
     def get_shortened_url(
