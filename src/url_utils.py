@@ -1,10 +1,6 @@
 import re
 
 
-def encode_url(url):
-    return url
-
-
 def validate_url(url):
     regex = re.compile(
         r"^(?:http|ftp)s?://"
@@ -21,7 +17,7 @@ def shorten_url(get_counter_value, unwrapped_url):
     # base 62 characters
     characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     base = len(characters)
-    counter = get_counter_value()
+    counter = get_counter_value() # TODO catch possible failure
     encoded = []
     while counter > 0:
         val = counter % base
