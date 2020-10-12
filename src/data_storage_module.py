@@ -30,8 +30,8 @@ def update_metadata_in_db(metadata_dict, shortcode):
 
 @curry
 def read_metadata_in_db(metadata_dict, shortcode):
-    if shortcode in metadata_db:
-        item = metadata_db[shortcode]
+    if shortcode in metadata_dict:
+        item = metadata_dict[shortcode]
         return {
             "redirectCount": item["redirectCount"],
             "lastRedirect": item["lastRedirect"],

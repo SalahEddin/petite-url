@@ -6,7 +6,7 @@ from toolz import curry
 def validate_shortcode(shortcode_length_limit, shortcode):
     return shortcode is not None and len(shortcode) == shortcode_length_limit
 
-
+@curry
 def validate_url(url):
     regex = re.compile(
         r"^(?:http|ftp)s?://"

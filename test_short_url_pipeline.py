@@ -3,7 +3,7 @@ from src.shorten_url_module import (
     shorten_url_module,
     short_url_pipeline_record,
 )
-from src.utils import validate_shortcode
+from src.utils import validate_shortcode, validate_url
 
 
 @pytest.mark.parametrize(
@@ -44,7 +44,7 @@ def test_url_validation(url, shortcode, expectedSuccess, expectedApiCode):
     result.requested_shortcode = shortcode
     validate_shortcode_with_limit = validate_shortcode(6)
     shorten_url_module.validate_shorten_parameters(
-        validate_shortcode_with_limit, result
+        validate_shortcode_with_limit, validate_url, result
     )
     assert result.success == expectedSuccess and result.apiCode == expectedApiCode
 

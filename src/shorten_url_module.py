@@ -20,12 +20,12 @@ class shorten_url_module:
     ### Pure functions
     ###########################
     @curry
-    def validate_shorten_parameters(shortcode_validate_func, result):
+    def validate_shorten_parameters(shortcode_validate_func, url_validate_func, result):
         if result.url is None:
             result.success = False
             result.apiCode = 400
             result.message = "URL is not present."
-        elif not validate_url(result.url):
+        elif not url_validate_func(result.url):
             result.success = False
             result.apiCode = 400
             result.message = "URL is not in a valid format."
@@ -131,7 +131,7 @@ class shorten_url_module:
         # TODO try/catch
         validate_shortcode_with_limit = validate_shortcode(shortcode_length_limit)
         validate_parameters = shorten_url_module.validate_shorten_parameters(
-            validate_shortcode_with_limit
+            validate_shortcode_with_limit, validate_url
         )
         get_shortCode = shorten_url_module.get_shortCode(
             get_counter, increment_counter, get_stored_shortCode, store_shortCode
@@ -153,7 +153,9 @@ class shorten_url_module:
     ):
         # TODO try/catch
         validate_shortcode_with_limit = validate_shortcode(shortcode_length_limit)
-        validate_parameters = shorten_url_module.validate_unwrap_parameters(validate_shortcode_with_limit)
+        validate_parameters = shorten_url_module.validate_unwrap_parameters(
+            validate_shortcode_with_limit
+        )
         get_url = shorten_url_module.search_unwrapped_url(get_stored_shortCode)
         update_shortcode_metadata = shorten_url_module.run_if_successful(
             register_entry_hit
