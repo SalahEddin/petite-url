@@ -1,8 +1,11 @@
-from toolz import pipe
+from toolz import pipe, curry
 from src.url_utils import validate_url, shorten_url
 
 # TODO move to environment
 SHORT_URL_LENGTH = 6
+
+REQUEST_BODY_URL_KEY = "url"
+REQUEST_BODY_SHORTCODE_KEY = "shortCode"
 
 
 class short_url_pipeline_record:
@@ -34,19 +37,25 @@ class short_url_pipeline:
         return result
 
     # TODO split into generation if not there and the storage
-    # need to curry
+    @curry
     def get_shortCode(
         get_counter, increment_counter, get_stored_shortCode, store_shortCode, result
     ):
         if not result.success:
             return result
-        isFound, _ = get_stored_shortCode(result.desired_shortCode)
+        isFound = False
+        if result.desired_shortCode is not None:
+            isFound, _ = get_stored_shortCode(result.desired_shortCode)
         if isFound:
             result.success = False
             result.apiCode = 409
             result.message = "shortCode is already in use."
         else:
-            result.shortCode = shorten_url(get_counter, result.url)
+            result.shortCode = (
+                shorten_url(get_counter, result.url)
+                if result.desired_shortCode is None
+                else result.desired_shortCode
+            )
             if result.shortCode is not None:
                 store_shortCode(result.shortCode, result.url)
                 increment_counter()
@@ -56,6 +65,24 @@ class short_url_pipeline:
                 result.message = "Could not generate shortCode."
         return result
 
+    def read_request_into_record(request_body):
+        result = short_url_pipeline_record()
+        result.desired_shortCode = (
+            request_body[REQUEST_BODY_SHORTCODE_KEY]
+            if REQUEST_BODY_SHORTCODE_KEY in request_body
+            else None
+        )
+        result.url = (
+            request_body[REQUEST_BODY_URL_KEY]
+            if REQUEST_BODY_URL_KEY in request_body
+            else None
+        )
+        result.apiCode = 200
+        result.shortCode = None
+        result.message = None
+        result.success = True
+        return result
+
     def get_shortened_url(
         get_counter,
         increment_counter,
@@ -63,20 +90,14 @@ class short_url_pipeline:
         store_shortCode,
         request_body,
     ):
-        result = short_url_pipeline_record()
         # TODO try/catch
-        # pipe(result, )
-        # # compose( validate_parameters, if shortened_exists: fail else
-        # (if no deired generate else not, get_shortcode, save_shortcode, save_metadata, (retrun (code, message))
+        get_shortCode = short_url_pipeline.get_shortCode(
+            get_counter, increment_counter, get_stored_shortCode, store_shortCode
+        )
 
-        # if "shortcode" in request.json:
-        #     # shortcode has a length of 6 characters and will contain only
-        #     # alphanumeric characters or underscores, and shouldn't be in use
-
-        #     # compose (validate_shortcode, is_shortcode_in_use)
-        #     print("shortcode")
-        # else:
-        #     # compose (generate_shortcode)
-        #     print(request.json)
-        # compose (save_shortcode, save_metadata, (retrun (code, message)))
-        return result
+        return pipe(
+            request_body,
+            short_url_pipeline.read_request_into_record,
+            short_url_pipeline.validate_parameters,
+            get_shortCode,
+        )
