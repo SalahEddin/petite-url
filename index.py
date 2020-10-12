@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
+import datetime
 from src.short_url_pipeline import short_url_pipeline, short_url_pipeline_record
 
 app = Flask(__name__)
@@ -30,8 +31,21 @@ def store_shortCode_in_db(shortcode, url):
     shortCodes_db[shortcode] = url
 
 
+def update_metadata(shortcode):
+    global metadata_db
+    if shortcode in metadata_db:
+        metadata_db[shortcode].redirectCount += 1
+        metadata_db[shortcode].lastRedirect = datetime.datetime.now()
+    else:
+        print("need to insert this key first")
+
+
 shorten_url_db_loaded = short_url_pipeline.get_shortened_url(
     get_counter, increment_counter, get_unwrapped_url_in_db, store_shortCode_in_db
+)
+
+get_shortcode_redirect_url = short_url_pipeline.get_unwrapped_url(
+    update_metadata, get_unwrapped_url_in_db
 )
 
 
@@ -50,12 +64,16 @@ def post_shortcode():
     )
 
 
+@app.route("/shortcode")
+def redirect_shortcode():
+    pipeline_result = get_shortcode_redirect_url(request.json)
+    return (
+        redirect(pipeline_result.url, pipeline_result.apiCode)
+        if pipeline_result.success
+        else (pipeline_result.message, pipeline_result.apiCode)
+    )
+
+
 # @app.route("/shortcode/stats")
 # def get_shortcode_stats():
-#     return "Hello, World!"
-
-
-# @app.route("/shortcode")
-# def redirect_shortcode():
-#     #  return redirect(url_for('login'))
 #     return "Hello, World!"

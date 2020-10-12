@@ -106,7 +106,7 @@ class short_url_pipeline:
     @curry
     def run_if_successful(func, record):
         if record is not None and record.success:
-            func()
+            func(record.shortcode)
         return record
 
     @curry
